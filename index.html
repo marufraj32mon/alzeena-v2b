@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courier Ratio Checker Tool</title>
+    <style>
+        :root {
+            --primary-color: #4F46E5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-light: #6b7280;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        p.subtitle {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .result-area {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            display: none; /* শুরুতে লুকানো থাকবে */
+            text-align: left;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .value {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .value.highlight {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        .status-msg {
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .error { color: #dc2626; }
+        .success { color: #16a34a; }
+
+        /* Loading Spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Courier Ratio Checker</h1>
+            <p class="subtitle">আপনার ই-কমার্স এর জন্য অটোমেটেড টুল</p>
+        </header>
+
+        <main>
+            <div class="input-group">
+                <label for="phone">ফোন নাম্বার দিন</label>
+                <input type="text" id="phone" placeholder="উদাহরণ: 01700000000" autocomplete="off">
+            </div>
+
+            <button id="checkBtn" onclick="checkRatio()">
+                <span id="btnText">চেক করুন</span>
+                <div id="loader" class="loader"></div>
+            </button>
+
+            <div id="resultArea" class="result-area">
+                <div class="result-item">
+                    <span class="label">ফোন নাম্বার:</span>
+                    <span class="value" id="resPhone">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">অবস্থা:</span>
+                    <span class="value" id="resStatus">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">রেজাল্ট (Ratio):</span>
+                    <span class="value highlight" id="resRatio">-</span>
+                </div>
+                <div id="statusMsg" class="status-msg"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function checkRatio() {
+            const phoneInput = document.getElementById('phone');
+            const phone = phoneInput.value.trim();
+            const resultArea = document.getElementById('resultArea');
+            const btn = document.getElementById('checkBtn');
+            const btnText = document.getElementById('btnText');
+            const loader = document.getElementById('loader');
+            
+            // ভ্যালিডেশন
+            if (!phone) {
+                alert("অনুগ্রহ করে একটি ফোন নাম্বার লিখুন।");
+                return;
+            }
+
+            // UI লোডিং স্টেট
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            loader.style.display = 'block';
+            resultArea.style.display = 'none';
+
+            try {
+                // API কল করা হচ্ছে (Vercel Serverless Function)
+                const response = await fetch(`/api/route?phone=${phone}`);
+                const data = await response.json();
+
+                // রেজাল্ট দেখানো
+                document.getElementById('resPhone').textContent = data.phone || phone;
+                document.getElementById('resStatus').textContent = data.status;
+                document.getElementById('resRatio').textContent = data.ratio;
+                
+                resultArea.style.display = 'block';
+                
+                const statusMsg = document.getElementById('statusMsg');
+                if (data.status === 'success') {
+                    statusMsg.innerHTML = '<span class="success">✅ ডাটা সফলভাবে পাওয়া গেছে।</span>';
+                } else {
+                    statusMsg.innerHTML = '<span class="error">⚠️ ডাটা পাওয়া যায়নি বা ভুল নাম্বার।</span>';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert("কোথাও একটা সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
+            } finally {
+                // UI রিসেট করা
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                loader.style.display = 'none';
+            }
+        }
+
+        // এন্টার কি চাপলে সাবমিট হবে
+        document.getElementById("phone").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                checkRatio();
+            }
+        });
+    </script>
+</body>
+</html>
